@@ -25,6 +25,7 @@ import {
   ShieldCheck,
   ArrowUpDown,
   Flame,
+  RefreshCw,
 } from 'lucide-react';
 import { fetchLiveModels } from '../services/api';
 
@@ -499,66 +500,38 @@ export const ModelHubModal: React.FC<ModelHubModalProps> = ({
               <p className="font-medium text-xs">正在从官方 API 检索真实模型与参数信息...</p>
             </div>
           ) : displayList.length === 0 ? (
-            activeProvider === 'tensorart' ? (
-              <div className="max-w-2xl mx-auto my-8 p-6 rounded-2xl bg-[#1c1a29] border border-purple-800/40 text-left flex flex-col gap-4 shadow-xl">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-xl bg-purple-600/20 text-purple-400 border border-purple-500/30">
-                    <Zap className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                      Tensor.Art / 吐司 AI 模型中心
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20">
-                        官方原生模型 Hub
-                      </span>
-                    </h3>
-                    <p className="text-xs text-slate-400">
-                      支持一键应用 Tensor.Art / 吐司社区海量 FLUX.1、SDXL、Pony、Illustrious 及 Wan 2.1 顶级模型。
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-xl bg-[#12111d] border border-purple-900/30 text-xs text-slate-300 space-y-2">
-                  <p className="font-semibold text-purple-300">📌 支持的 Tensor.Art 官方模型示例：</p>
-                  <div className="grid grid-cols-2 gap-2 text-slate-400 text-[11px] font-mono">
-                    <div>• FLUX.1 [dev] (ID: 762499092404095400)</div>
-                    <div>• SDXL 1.0 Base (ID: 620138988583486440)</div>
-                    <div>• Wan 2.1 Video (ID: 799541882207328343)</div>
-                    <div>• Illustrious-XL (ID: 773829103984729100)</div>
-                  </div>
-                </div>
+            <div className="h-72 flex flex-col items-center justify-center text-slate-400 space-y-3 p-6 bg-[#161720] rounded-2xl border border-[#262834]">
+              <Sparkles className="w-10 h-10 text-cyan-400/60" />
+              <div className="text-center">
+                <p className="text-sm font-bold text-white">
+                  当前服务商下暂无【{activeCategory === 'video' ? 'AI 视频大模型' : activeCategory === 'checkpoint' ? '基础底模' : activeCategory === 'lora' ? '微调 LoRA' : '当前分类'}】
+                </p>
+                <p className="text-xs text-slate-400 mt-1">
+                  {error ? `错误原因: ${error}` : '请尝试切换分类、服务商或输入更精准的关键词进行全网实时拉取'}
+                </p>
               </div>
-            ) : (
-              <div className="h-72 flex flex-col items-center justify-center text-slate-400 space-y-3 p-6 bg-[#161720] rounded-2xl border border-[#262834]">
-                <Sparkles className="w-10 h-10 text-cyan-400/60" />
-                <div className="text-center">
-                  <p className="text-sm font-bold text-white">
-                    当前服务商下暂无【{activeCategory === 'video' ? 'AI 视频大模型' : activeCategory === 'checkpoint' ? '基础底模' : activeCategory === 'lora' ? '微调 LoRA' : '当前分类'}】
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    全生态中包含 Wan 2.1、LTX-Video、可灵 Kling、Agnes Video、FLUX.1 及 SDXL 等海量可用模型
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-2 mt-2">
+                <button
+                  onClick={() => {
+                    setQuery('');
+                    setActiveProvider('all');
+                  }}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-cyan-600/30 transition-all flex items-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>重置并查看全服务商模型 (All Providers)</span>
+                </button>
+                {error && (
                   <button
-                    onClick={() => setActiveProvider('all')}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-cyan-600/30 transition-all flex items-center gap-1.5"
+                    onClick={() => loadModels(activeProvider, activeCategory, query, sortOption)}
+                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition-all flex items-center gap-1.5 border border-slate-700"
                   >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>查看全服务商模型 (All Providers)</span>
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>立即重试 (Retry)</span>
                   </button>
-                  {activeCategory === 'video' && (
-                    <button
-                      onClick={() => setActiveProvider('fal')}
-                      className="px-4 py-2 rounded-xl bg-[#22242e] hover:bg-[#2c303d] text-emerald-300 font-bold text-xs border border-emerald-500/30 transition-all flex items-center gap-1.5"
-                    >
-                      <Video className="w-3.5 h-3.5" />
-                      <span>查看 Fal.ai 视频模型</span>
-                    </button>
-                  )}
-                </div>
+                )}
               </div>
-            )
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {displayList.map((m: any, i: number) => {

@@ -19,7 +19,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { ComfyParameters } from '../types/graph';
-import { SAMPLER_OPTIONS, SCHEDULER_OPTIONS } from '../constants/nodes';
+import { BASE_MODELS, SAMPLER_OPTIONS, SCHEDULER_OPTIONS } from '../constants/nodes';
 import { refinePromptWithGemini, fetchLiveModels } from '../services/api';
 import { validateModelCompatibility } from '../utils/baseModelMatcher';
 import { normalizeForComfyUI } from '../utils/engineParameterNormalizer';
@@ -60,6 +60,17 @@ export const ParameterInspector: React.FC<ParameterInspectorProps> = ({
   const [isRefiningPrompt, setIsRefiningPrompt] = React.useState(false);
   const [liveModels, setLiveModels] = React.useState<Array<{ label: string; value: string; provider: string }>>([]);
   const [isLoadingModels, setIsLoadingModels] = React.useState(false);
+
+  // Merge static BASE_MODELS with dynamically fetched liveModels
+  const allModels = React.useMemo(() => {
+    const list = [...BASE_MODELS.map(m => ({ label: m.label, value: m.value, provider: m.provider as any }))];
+    liveModels.forEach(lm => {
+      if (!list.some(m => m.value === lm.value)) {
+        list.push(lm);
+      }
+    });
+    return list as Array<{ label: string; value: string; provider: any }>;
+  }, [liveModels]);
 
   React.useEffect(() => {
     let active = true;
@@ -334,15 +345,15 @@ export const ParameterInspector: React.FC<ParameterInspectorProps> = ({
               className="w-full bg-[#111216] border border-[#2b2d38] focus:border-cyan-500 rounded-lg px-2.5 py-1.5 text-slate-200 text-[11px] font-mono outline-none cursor-pointer"
             >
               {/* Dynamically preserve custom or current checkpoint */}
-              {params.checkpoint && !liveModels.some((m) => m.value === params.checkpoint) && (
+              {params.checkpoint && !allModels.some((m) => m.value === params.checkpoint) && (
                 <option key={`custom-current-${params.checkpoint}`} value={params.checkpoint}>
                   ★ [当前生效模型] {params.checkpoint}
                 </option>
               )}
               {/* Active Provider Models Group */}
-              {liveModels.filter((m) => m.provider === params.targetProvider).length > 0 && (
-                <optgroup label={`当前引擎已检索可用模型 (${params.targetProvider.toUpperCase()})`}>
-                  {liveModels
+              {allModels.filter((m) => m.provider === params.targetProvider).length > 0 && (
+                <optgroup label={`当前引擎官方推荐/已检索模型 (${params.targetProvider.toUpperCase()})`}>
+                  {allModels
                     .filter((m) => m.provider === params.targetProvider)
                     .map((m, idx) => (
                       <option key={`cur-${m.provider}-${m.value}-${idx}`} value={m.value}>
@@ -352,9 +363,9 @@ export const ParameterInspector: React.FC<ParameterInspectorProps> = ({
                 </optgroup>
               )}
               {/* All Other Ecosystem Models Group */}
-              {liveModels.filter((m) => m.provider !== params.targetProvider).length > 0 && (
-                <optgroup label="全生态其他引擎已检索模型">
-                  {liveModels
+              {allModels.filter((m) => m.provider !== params.targetProvider).length > 0 && (
+                <optgroup label="全生态其他引擎推荐模型">
+                  {allModels
                     .filter((m) => m.provider !== params.targetProvider)
                     .map((m, idx) => (
                       <option key={`eco-${m.provider}-${m.value}-${idx}`} value={m.value}>
@@ -363,7 +374,7 @@ export const ParameterInspector: React.FC<ParameterInspectorProps> = ({
                     ))}
                 </optgroup>
               )}
-              {liveModels.length === 0 && (
+              {allModels.length === 0 && (
                 <option value={params.checkpoint || ''}>
                   {isLoadingModels ? '正在从云端实时拉取最新模型列表...' : (params.checkpoint || '点击右上角「模型中心」实时拉取选用')}
                 </option>

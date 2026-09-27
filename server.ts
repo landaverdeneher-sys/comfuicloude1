@@ -167,6 +167,7 @@ const genAI = createGoogleGenAI();
 // 1. Civitai API Proxies (developer.civitai.com)
 // ==========================================
 const civitaiCache = new Map<string, { data: any; expiry: number }>();
+const tensorArtToolsCache = new Map<string, { data: any; expiry: number }>();
 
 app.get('/api/civitai/models', async (req, res) => {
   try {
@@ -202,7 +203,7 @@ app.get('/api/civitai/models', async (req, res) => {
 
     const response = await fetch(`https://civitai.com/api/v1/models?${params.toString()}`, {
       headers,
-      signal: AbortSignal.timeout(25000),
+      signal: AbortSignal.timeout(30000), // Increased to 30s
     });
 
     if (!response.ok) {
@@ -218,7 +219,7 @@ app.get('/api/civitai/models', async (req, res) => {
     return res.json(data);
   } catch (error: any) {
     const isTimeout = error.name === 'TimeoutError' || error.message?.includes('timeout') || error.message?.includes('aborted');
-    console.warn(`[Civitai Proxy] 获取${isTimeout ? '超时 (25s)' : '失败'}:`, error.message);
+    console.warn(`[Civitai Proxy] 获取${isTimeout ? '超时 (30s)' : '失败'}:`, error.message);
     return res.status(504).json({ error: isTimeout ? 'Civitai API 请求超时 (上游 Cloudflare 响应过慢，请稍后重试或配置 Civitai API Key)' : error.message || 'Failed to fetch from Civitai' });
   }
 });
@@ -1531,25 +1532,29 @@ app.get("/api/models", async (req, res) => {
         } else {
           const civitaiResp = await fetch(`https://civitai.com/api/v1/models?${params.toString()}`, {
             headers: civitaiHeaders,
-            signal: AbortSignal.timeout(25000),
+            signal: AbortSignal.timeout(30000), // Increased to 30s
           });
           if (civitaiResp.ok) {
             const cData = await civitaiResp.json();
-            const mappedCivitai = (cData.items || []).map((m: any) => ({
-              id: String(m.id),
-              name: m.name,
-              provider: "Civitai",
-              type: m.type,
-              category: m.type === "LORA" ? "LoRA" : m.type === "MotionModule" ? "Video" : "Checkpoint",
-              baseModel: m.modelVersions?.[0]?.baseModel || "FLUX.1 / SDXL",
-              downloads: m.stats?.downloadCount || 0,
-              rating: m.stats?.rating || 0,
-              imageUrl: m.modelVersions?.[0]?.images?.[0]?.url || "",
-              externalUrl: `https://civitai.com/models/${m.id}`,
-              trainedWords: m.modelVersions?.[0]?.trainedWords || ["masterpiece", "high quality"],
-            }));
-            results.civitai = mappedCivitai;
-            civitaiCache.set(civitaiCacheKey, { data: mappedCivitai, expiry: Date.now() + 60000 });
+            if (cData.error) {
+              results.civitai = { error: cData.error } as any;
+            } else {
+              const mappedCivitai = (cData.items || []).map((m: any) => ({
+                id: String(m.id),
+                name: m.name,
+                provider: "Civitai",
+                type: m.type,
+                category: m.type === "LORA" ? "LoRA" : m.type === "MotionModule" ? "Video" : "Checkpoint",
+                baseModel: m.modelVersions?.[0]?.baseModel || "FLUX.1 / SDXL",
+                downloads: m.stats?.downloadCount || 0,
+                rating: m.stats?.rating || 0,
+                imageUrl: m.modelVersions?.[0]?.images?.[0]?.url || "",
+                externalUrl: `https://civitai.com/models/${m.id}`,
+                trainedWords: m.modelVersions?.[0]?.trainedWords || ["masterpiece", "high quality"],
+              }));
+              results.civitai = mappedCivitai;
+              civitaiCache.set(civitaiCacheKey, { data: mappedCivitai, expiry: Date.now() + 60000 });
+            }
           } else {
             results.civitai = { error: `Civitai 接口异常 (HTTP ${civitaiResp.status})` } as any;
           }
@@ -1833,7 +1838,7 @@ app.get("/api/models", async (req, res) => {
         try {
           const liveTools = await fetchTensorArtToolsList(taKey);
           const liveItems = (liveTools || []).map((t: any) => {
-            const isVideo = (t.name || '').includes('video');
+            const isVideo = (t.name || '').includes('video') || t.taskType === 'VIDEO';
             const isEdit = t.taskType === 'TOOLS' || (t.name || '').includes('inpaint') || (t.name || '').includes('extend') || (t.name || '').includes('remove');
             const isLora = (t.name || '').includes('lora');
             return {
@@ -1843,11 +1848,11 @@ app.get("/api/models", async (req, res) => {
               category: isVideo ? "Video" : isLora ? "LoRA" : isEdit ? "Edit" : "Checkpoint",
               type: isLora ? "LORA" : isVideo ? "MotionModule" : "Checkpoint",
               baseModel: (t.name || '').includes("flux") ? "FLUX.1" : (t.name || '').includes("pony") ? "Pony" : (t.name || '').includes("sdxl") ? "SDXL 1.0" : "SD 1.5",
-              downloads: 50000,
-              likes: 4500,
+              downloads: t.usageCount || 50000,
+              likes: t.likeCount || 4500,
               rating: 4.95,
               badge: "OpenWorks 实时",
-              imageUrl: "",
+              imageUrl: t.coverUrl || t.iconUrl || t.imageUrl || t.previewUrl || "",
               externalUrl: `https://tensor.art`,
               description: t.description || "",
               tags: ["tensorart", "openworks", t.taskType || "tool"],
@@ -3116,6 +3121,12 @@ function getTensorArtBaseUrl(key: string): string {
 
 // Helper to fetch OpenWorks tool list (23 tools)
 async function fetchTensorArtToolsList(apiKey: string) {
+  const cacheKey = `tensor_tools_${apiKey}`;
+  const cached = tensorArtToolsCache.get(cacheKey);
+  if (cached && cached.expiry > Date.now()) {
+    return cached.data;
+  }
+
   const baseUrl = getTensorArtBaseUrl(apiKey);
   const res = await fetch(`${baseUrl}/tool/list`, {
     method: 'POST',
@@ -3124,6 +3135,7 @@ async function fetchTensorArtToolsList(apiKey: string) {
       'Echo-Access-Key': apiKey,
     },
     body: JSON.stringify({}),
+    signal: AbortSignal.timeout(15000),
   });
   if (!res.ok) {
     const errText = await res.text();
@@ -3133,7 +3145,9 @@ async function fetchTensorArtToolsList(apiKey: string) {
   if (json.code !== '0' && json.code !== 0) {
     throw new Error(`Tensor.Art OpenWorks Error [${json.code}]: ${json.message || 'Unknown error'}`);
   }
-  return json.data?.tools || [];
+  const tools = json.data?.tools || [];
+  tensorArtToolsCache.set(cacheKey, { data: tools, expiry: Date.now() + 120000 }); // 2 min cache
+  return tools;
 }
 
 // Helper to dynamically build inputs according to tool schema

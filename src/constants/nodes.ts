@@ -34,7 +34,51 @@ export interface BaseModelOption {
   category?: 'checkpoint' | 'video' | 'reasoning' | 'edit' | 'lora';
 }
 
-export const BASE_MODELS: BaseModelOption[] = [];
+export const BASE_MODELS: BaseModelOption[] = [
+  // ===================== TENSOR.ART (OpenWorks) =====================
+  { label: '🎨 [Tensor] FLUX.1 [dev] 旗舰生图 (flux_1_dev)', value: 'flux_1_dev', provider: 'tensorart', category: 'checkpoint' },
+  { label: '🎨 [Tensor] FLUX.1 [schnell] 极速生图 (flux_1_schnell)', value: 'flux_1_schnell', provider: 'tensorart', category: 'checkpoint' },
+  { label: '🎨 [Tensor] SDXL 1.0 Base 官方基模 (sdxl_base_1_0)', value: 'sdxl_base_1_0', provider: 'tensorart', category: 'checkpoint' },
+  { label: '🎨 [Tensor] Pony Diffusion V6 XL (pony_diffusion_v6_xl)', value: 'pony_diffusion_v6_xl', provider: 'tensorart', category: 'checkpoint' },
+  { label: '🎨 [Tensor] Realistic Pony Diffusion (realistic_pony_diffusion)', value: 'realistic_pony_diffusion', provider: 'tensorart', category: 'checkpoint' },
+  { label: '🎨 [Tensor] Illustrious-XL (illustrious_xl)', value: 'illustrious_xl', provider: 'tensorart', category: 'checkpoint' },
+  { label: '🎨 [Tensor] DreamShaper XL (dreamshaper_xl)', value: 'dreamshaper_xl', provider: 'tensorart', category: 'checkpoint' },
+  { label: '🎨 [Tensor] Wan 2.1 Video 运镜模型 (wan_video)', value: 'wan_video', provider: 'tensorart', category: 'video' },
+
+  // ===================== MODELSCOPE (CN/AI) =====================
+  { label: '🇨🇳 [魔搭] Tongyi-MAI Z-Image-Turbo (免 Token 直连)', value: 'Tongyi-MAI/Z-Image-Turbo', provider: 'modelscope', category: 'checkpoint' },
+  { label: '🇨🇳 [魔搭] SDXL 1.0 官方基模 (AI-ModelScope/stable-diffusion-xl-base-1.0)', value: 'AI-ModelScope/stable-diffusion-xl-base-1.0', provider: 'modelscope', category: 'checkpoint' },
+  { label: '🇨🇳 [魔搭] FLUX.1 [dev] (AI-ModelScope/flux.1-dev)', value: 'AI-ModelScope/flux.1-dev', provider: 'modelscope', category: 'checkpoint' },
+  { label: '🇨🇳 [魔搭] Wan 2.1 文生图 (damo/wan2.1-t2i-1.3b)', value: 'damo/wan2.1-t2i-1.3b', provider: 'modelscope', category: 'checkpoint' },
+  { label: '🇨🇳 [魔搭] Wan 2.1 视频生图 (damo/wan2.1-i2v-480p-14b)', value: 'damo/wan2.1-i2v-480p-14b', provider: 'modelscope', category: 'video' },
+  { label: '🇨🇳 [魔搭] CogVideoX-5B 视频模型 (THUDM/CogVideoX-5b)', value: 'THUDM/CogVideoX-5b', provider: 'modelscope', category: 'video' },
+  { label: '🇨🇳 [魔搭] SDXL 宫崎骏风格 LoRA (Ghibli Style)', value: 'Ghibli-Style-LoRA', provider: 'modelscope', category: 'lora' },
+  { label: '🇨🇳 [魔搭] Qwen-VL-Plus 视觉解析 (qwen/qwen-vl-plus)', value: 'qwen/qwen-vl-plus', provider: 'modelscope', category: 'edit' },
+  { label: '🇨🇳 [魔搭] Kolors 旗舰基模 (Kwai-Kolors/Kolors)', value: 'Kwai-Kolors/Kolors', provider: 'modelscope', category: 'checkpoint' },
+
+  // ===================== HUGGING FACE =====================
+  { label: '🤗 [HF] FLUX.1-dev (black-forest-labs/FLUX.1-dev)', value: 'black-forest-labs/FLUX.1-dev', provider: 'huggingface', category: 'checkpoint' },
+  { label: '🤗 [HF] SDXL 1.0 (stabilityai/stable-diffusion-xl-base-1.0)', value: 'stabilityai/stable-diffusion-xl-base-1.0', provider: 'huggingface', category: 'checkpoint' },
+  { label: '🤗 [HF] Stable Diffusion 3.5 Large (stabilityai/stable-diffusion-3.5-large)', value: 'stabilityai/stable-diffusion-3.5-large', provider: 'huggingface', category: 'checkpoint' },
+  { label: '🤗 [HF] Kolors (Kwai-Kolors/Kolors)', value: 'Kwai-Kolors/Kolors', provider: 'huggingface', category: 'checkpoint' },
+  { label: '🤗 [HF] SD 1.5 (runwayml/stable-diffusion-v1-5)', value: 'runwayml/stable-diffusion-v1-5', provider: 'huggingface', category: 'checkpoint' },
+
+  // ===================== FAL.AI =====================
+  { label: '⚡ [Fal] FLUX.1 Schnell (fal-ai/flux/schnell)', value: 'fal-ai/flux/schnell', provider: 'fal', category: 'checkpoint' },
+  { label: '⚡ [Fal] FLUX.1 [dev] (fal-ai/flux/dev)', value: 'fal-ai/flux/dev', provider: 'fal', category: 'checkpoint' },
+  { label: '⚡ [Fal] SDXL 1.0 (fal-ai/stable-diffusion-xl-base-1.0)', value: 'fal-ai/stable-diffusion-xl-base-1.0', provider: 'fal', category: 'checkpoint' },
+  { label: '⚡ [Fal] Wan 2.1 Video (fal-ai/wan/t2v)', value: 'fal-ai/wan/t2v', provider: 'fal', category: 'video' },
+
+  // ===================== CIVITAI =====================
+  { label: '🌟 [Civitai] Krea 2 Turbo 原生极速 (urn:air:krea2:checkpoint:civitai:2726029@3091481)', value: 'urn:air:krea2:checkpoint:civitai:2726029@3091481', provider: 'civitai', category: 'checkpoint' },
+  { label: '🌟 [Civitai] SDXL 1.0 Base (urn:air:sdxl:checkpoint:civitai:101055@128078)', value: 'urn:air:sdxl:checkpoint:civitai:101055@128078', provider: 'civitai', category: 'checkpoint' },
+  { label: '🌟 [Civitai] FLUX.1 [dev] (urn:air:flux1:checkpoint:civitai:618692@691639)', value: 'urn:air:flux1:checkpoint:civitai:618692@691639', provider: 'civitai', category: 'checkpoint' },
+
+  // ===================== SPECIALIZED =====================
+  { label: '🧠 [商汤] SenseNova V5 (sensenova-v5)', value: 'sensenova-v5', provider: 'sensenova', category: 'checkpoint' },
+  { label: '🚀 [Agnes] Agnes 2.5 Flash (agnes-v2.5)', value: 'agnes-v2.5', provider: 'agnes', category: 'checkpoint' },
+  { label: '💎 [Google] Imagen 3.0 (imagen-3.0-generate-002)', value: 'imagen-3.0-generate-002', provider: 'gemini', category: 'checkpoint' },
+];
 
 export const NODE_DEFINITIONS: Record<string, NodeDefinition> = {
   // ===================== LOADERS =====================
@@ -73,8 +117,9 @@ export const NODE_DEFINITIONS: Record<string, NodeDefinition> = {
       {
         name: 'ckpt_name',
         label: 'ckpt_name (模型名称/路径/ID)',
-        type: 'text',
+        type: 'select',
         default: 'Tongyi-MAI/Z-Image-Turbo',
+        options: BASE_MODELS,
         placeholder: '输入模型 ID/路径，或点击右上角「模型中心」实时拉取选用',
       },
     ],

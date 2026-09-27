@@ -681,13 +681,13 @@ export default function App() {
         return;
       }
       if (widgetName === 'targetProvider') {
-        const prov = String(value);
+        const prov = value as any;
         setNodes((prev) =>
           prev.map((n) =>
             n.id === nodeId
               ? {
                   ...n,
-                  title: `加载底模 (${prov.toUpperCase()})`,
+                  title: `加载底模 (${String(prov).toUpperCase()})`,
                   values: { ...(n.values || {}), targetProvider: prov },
                 }
               : n
